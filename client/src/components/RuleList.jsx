@@ -7,7 +7,9 @@ import { useNavigate } from 'react-router-dom';
 const RuleList = () => {
   const [rules, setRules] = useState([]);
   const [error, setError] = useState('');
+  const [loading,setLoading] = useState(true)
   const navigate = useNavigate();
+
 
   // Fetch all rules when the component mounts
   useEffect(() => {
@@ -15,23 +17,27 @@ const RuleList = () => {
       try {
         const response = await axios.get('http://localhost:5500/rules');
         setRules(response.data.rules); // Store rules in state
+        setLoading(false)
       } catch (err) {
         console.error(err);
         setError('Error fetching rules');
+        setLoading(false)
       }
     };
 
     fetchRules();
   }, []);
 
+  if(loading === true) return <span className="loading loading-spinner text-warning  w-28"></span>
+
   return (
     <div>
       <h2 className="text-3xl text-red-500 mt-8 font-semibold mb-4">All Rules</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      <ul className="overflow-y-scroll ml-5">
-        {rules.map((rule) => (
-          <li key={rule._id} className="mb-3 border rounded-3xl border-red-500">
+      <ul className="overflow-y-scroll h-80 ml-5">
+        {rules.map((rule,index) => (
+          <li key={index} className="mb-3 border rounded-3xl border-red-500">
             <p className="text font-bold">{rule.name}</p>
             <p className="text-md  font-bold text-gray-600">{rule.ruleString}</p>
           </li>

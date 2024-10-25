@@ -15,7 +15,7 @@ const RuleList = () => {
   useEffect(() => {
     const fetchRules = async () => {
       try {
-        const response = await axios.get('https://rule-engine-backend-ivory.vercel.app/?vercelToolbarCode=e_rj4GRmUXsRQwL/rules');
+        const response = await axios.get('https://rule-engine-backend-ivory.vercel.app/rules');
         setRules(response.data.rules); // Store rules in state
         setLoading(false)
       } catch (err) {

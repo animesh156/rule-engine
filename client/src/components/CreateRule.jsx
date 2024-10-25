@@ -40,7 +40,7 @@ const CreateRule = () => {
     }
 
     try {
-      const response = await axios.post('https://rule-engine-backend-ivory.vercel.app/?vercelToolbarCode=e_rj4GRmUXsRQwL/create', { ruleString });
+      const response = await axios.post('https://rule-engine-backend-ivory.vercel.app/create', { ruleString });
       setMessage(response.data.message);
     
       setRuleString('');

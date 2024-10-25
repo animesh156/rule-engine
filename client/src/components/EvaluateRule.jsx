@@ -21,7 +21,7 @@ const EvaluateRule = () => {
   useEffect(() => {
     const fetchRules = async () => {
       try {
-        const response = await axios.get('http://localhost:5500/rules');
+        const response = await axios.get('https://rule-engine-backend-ivory.vercel.app/?vercelToolbarCode=e_rj4GRmUXsRQwL/rules');
         setRules(response.data.rules);
       } catch (err) {
         console.error(err);
@@ -50,7 +50,7 @@ const EvaluateRule = () => {
   const handleEvaluate = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5500/evaluate', {
+      const response = await axios.post('https://rule-engine-backend-ivory.vercel.app/?vercelToolbarCode=e_rj4GRmUXsRQwL/evaluate', {
         id: selectedRule, // Send the selected rule ID
         inputData, // Send the input data
       });

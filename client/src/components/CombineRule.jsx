@@ -13,7 +13,7 @@ const CombineRule = () => {
 
   useEffect(() => {
     const fetchRules = async () => {
-      const response = await axios.get('http://localhost:5500/rules'); // Assuming this endpoint returns all rules
+      const response = await axios.get('https://rule-engine-backend-ivory.vercel.app/?vercelToolbarCode=e_rj4GRmUXsRQwL/rules'); // Assuming this endpoint returns all rules
       setRules(response.data.rules);
     };
     fetchRules();
@@ -23,7 +23,7 @@ const CombineRule = () => {
     e.preventDefault();
     
     try {
-      const response = await axios.post('http://localhost:5500/combine', { id1, id2, operator });
+      const response = await axios.post('https://rule-engine-backend-ivory.vercel.app/?vercelToolbarCode=e_rj4GRmUXsRQwL/combine', { id1, id2, operator });
       setMessage(response.data.message);
 
       navigate('/evaluate')

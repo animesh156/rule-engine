@@ -1,94 +1,135 @@
-const express = require("express");
-const router = express.Router();
+const express = require('express');
 const Rule = require('../model/ruleModel');
+const mongoose = require('mongoose');
+const router = express.Router();
 
-// AST Node Class
-class Node {
-  constructor(type, left = null, right = null, value = null) {
-    this.type = type;
-    this.left = left;
-    this.right = right;
-    this.value = value;
-  }
-}
+const { tokenize, parse, evaluateAST } = require('../utils/ruleUtil');
 
-// Helper to Parse Rule String into AST
-const parseRule = (ruleString) => {
-  const tokens = ruleString.match(/\w+|[<>=!]+|AND|OR|\(|\)/g);
-  let index = 0;
-
-  const parseExpression = () => {
-    let node = parseTerm();
-    while (tokens[index] === "AND" || tokens[index] === "OR") {
-      const operator = tokens[index++];
-      const right = parseTerm();
-      node = new Node("operator", node, right, operator);
-    }
-    return node;
-  };
-
-  const parseTerm = () => {
-    if (tokens[index] === "(") {
-      index++;
-      const node = parseExpression();
-      index++;
-      return node;
-    }
-    const left = tokens[index++];
-    const operator = tokens[index++];
-    const right = tokens[index++];
-    return new Node("operand", null, null, { left, operator, right });
-  };
-
-  return parseExpression();
-};
-
-// Create Rule API
-router.post("/create", async (req, res) => {
+// Create Rule Route: Accepts a rule string and saves it with an auto-generated name
+router.post('/create', async (req, res) => {
   try {
     const { ruleString } = req.body;
-    const ast = parseRule(ruleString);
-    const savedRule = await Rule.create(ast);
-    res.status(201).json(savedRule);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    // Tokenize and parse the rule string into an AST
+    const tokens = tokenize(ruleString);
+    const ast = parse(tokens);
+
+    // Find the current number of rules to determine the next rule name
+    const ruleCount = await Rule.countDocuments();
+    const ruleName = `Rule ${ruleCount + 1}`; // e.g., "Rule 1", "Rule 2", etc.
+
+    // Save the AST to MongoDB with the generated name
+    const rule = new Rule({ name: ruleName, ast });
+    await rule.save();
+
+    res.status(201).json({ message: 'Rule created successfully', rule });
+  } catch (error) {
+    res.status(500).json({ error: 'Error creating rule' });
   }
 });
 
-// Evaluate Rule API
-const evaluateNode = (node, data) => {
-  if (node.type === "operand") {
-    const { left, operator, right } = node.value;
-    switch (operator) {
-      case ">":
-        return data[left] > right;
-      case "<":
-        return data[left] < right;
-      case ">=":
-        return data[left] >= right;
-      case "<=":
-        return data[left] <= right;
-      case "==":
-        return data[left] == right;
-      case "!=":
-        return data[left] != right;
+// Evaluate Rule Route: Retrieves a rule by name and evaluates it
+router.post('/evaluate', async (req, res) => {
+  try {
+    const { id, inputData } = req.body;
+
+    // Validate the ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid rule ID' });
     }
-  } else if (node.type === "operator") {
-    const leftEval = evaluateNode(node.left, data);
-    const rightEval = evaluateNode(node.right, data);
-    return node.value === "AND" ? leftEval && rightEval : leftEval || rightEval;
+
+    // Find the rule by ID
+    const rule = await Rule.findById(id);
+    if (!rule) return res.status(404).json({ error: 'Rule not found' });
+
+    // Evaluate the AST with the given input data
+    const result = evaluateAST(rule.ast, inputData);
+
+    res.status(200).json({ result });
+  } catch (error) {
+    res.status(500).json({ error: 'Error evaluating rule' });
+  }
+});
+
+// combine two rules by their id
+router.post('/combine', async (req, res) => {
+  try {
+    const { id1, id2, operator } = req.body;
+
+    // Validate both ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(id1) || !mongoose.Types.ObjectId.isValid(id2)) {
+      return res.status(400).json({ error: 'Invalid rule IDs' });
+    }
+
+    // Fetch both rules from the database
+    const [rule1, rule2] = await Promise.all([
+      Rule.findById(id1),
+      Rule.findById(id2)
+    ]);
+
+    if (!rule1 || !rule2) {
+      return res.status(404).json({ error: 'One or both rules not found' });
+    }
+
+     const ruleCount = await Rule.countDocuments();
+    const ruleName = `Rule ${ruleCount + 1}`
+
+    // Combine the ASTs using the specified operator (AND / OR)
+    const combinedAST = {
+      type: 'LogicalExpression',
+      operator: operator.toUpperCase(), // Use 'AND' or 'OR'
+      left: rule1.ast,
+      right: rule2.ast,
+    };
+
+    // Save the new combined rule to the database
+    const newRule = new Rule({name: ruleName, ast: combinedAST });
+    await newRule.save();
+
+    res.status(201).json({
+      message: 'Rules combined successfully',
+      rule: newRule,
+    });
+  } catch (error) {
+    console.error('Error combining rules:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+const convertASTToString = (ast) => {
+  if (!ast) return '';
+
+  switch (ast.type) {
+    case 'BinaryExpression':
+      return `${ast.left.name || convertASTToString(ast.left)} ${ast.operator} ${ast.right.value}`;
+    case 'LogicalExpression':
+      return `(${convertASTToString(ast.left)} ${ast.operator} ${convertASTToString(ast.right)})`;
+    case 'Identifier':
+      return ast.name;
+    case 'Literal':
+      return ast.value;
+    default:
+      return '';
   }
 };
 
-router.post("/evaluate", async (req, res) => {
+router.get('/rules', async (req, res) => {
   try {
-    const { ruleId, data } = req.body;
-    const rule = await Rule.findById(ruleId);
-    const result = evaluateNode(rule, data);
-    res.json({ result });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const rules = await Rule.find({}); // Fetch all rules
+
+    const formattedRules = rules.map((rule) => ({
+      name: rule.name,
+      ruleString: convertASTToString(rule.ast),
+    }));
+
+    res.status(200).json({ rules: formattedRules });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching rules' });
   }
 });
+
 
 module.exports = router;

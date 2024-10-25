@@ -1,17 +1,21 @@
 const express = require("express");
+
 const app = express();
 const dotenv = require("dotenv").config();
+const bodyParser = require("body-parser");
+const rule = require("./routes/rules");
+var cors = require('cors')
+
 const port = process.env.PORT;
-const colors = require("colors");
-const ruleRoute = require("./routes/rules");
 const connectDB = require("./config/db");
-
 connectDB();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(cors())
+app.use(bodyParser.json());
 
-app.use("/", ruleRoute);
+app.use("/", rule);
+
+// Start the Server
 
 app.listen(port, () => {
-  console.log(`Server started on port ${port}.`.yellow);
+  console.log(`Server running on http://localhost:${port}`);
 });

@@ -1,11 +1,8 @@
 const mongoose = require('mongoose');
 
-const nodeSchema = new mongoose.Schema({
-  type: String, // 'operator' or 'operand'
-  left: mongoose.Schema.Types.Mixed, // Reference to child nodes
-  right: mongoose.Schema.Types.Mixed,
-  value: mongoose.Schema.Types.Mixed, // Comparison value (for operands)
+const ruleSchema = new mongoose.Schema({
+  name: String,
+  ast: Object,  // Store the AST as JSON
 });
 
-const Rule = mongoose.model('Rule', nodeSchema);
-module.exports = Rule;
+module.exports = mongoose.model('Rule', ruleSchema);

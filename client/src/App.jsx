@@ -1,35 +1,24 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import CreateRule from './components/CreateRule';
+import CombineRule from './components/CombineRule';
+import EvaluateRule from './components/EvaluateRule';
+import RuleList from './components/RuleList'
 
+const App = () => {
   return (
-    <>
+    <Router>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <h1 className='text-5xl font-bold text-sky-500 mb-4'>Rule Engine</h1>
+        <Routes>
+          <Route path="/" element={<CreateRule />} />
+          <Route path="/combine" element={<CombineRule />} />
+          <Route path="/evaluate" element={<EvaluateRule />} />
+          <Route path="/rules" element={<RuleList />} />
+        </Routes>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    </Router>
+  );
+};
 
-export default App
+export default App;

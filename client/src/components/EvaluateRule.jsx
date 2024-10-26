@@ -22,6 +22,8 @@ const EvaluateRule = () => {
     const fetchRules = async () => {
       try {
         const response = await axios.get('https://rule-engine-backend-ivory.vercel.app/rules');
+     
+        console.log(response.data.rules)
         setRules(response.data.rules);
       } catch (err) {
         console.error(err);
@@ -49,6 +51,7 @@ const EvaluateRule = () => {
   // Handle evaluation
   const handleEvaluate = async (event) => {
     event.preventDefault();
+    
     try {
       const response = await axios.post('https://rule-engine-backend-ivory.vercel.app/evaluate', {
         id: selectedRule, // Send the selected rule ID
@@ -84,8 +87,8 @@ const EvaluateRule = () => {
        
         <select value={selectedRule}  onChange={handleRuleChange} className="select select-success w-full max-w-xs">
           <option selected >Select a rule</option>
-          {rules.map((rule) => (
-            <option key={rule._id} value={rule._id}>
+          {rules.map((rule,index) => (
+            <option key={index} value={rule.id}>
               {rule.name}
             </option>
           ))}

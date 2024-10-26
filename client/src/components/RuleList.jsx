@@ -39,7 +39,7 @@ const RuleList = () => {
         {rules.map((rule,index) => (
           <li key={index} className="mb-3 border rounded-3xl border-red-500">
             <p className="text font-bold">{rule.name}</p>
-            <p className="text-md  font-bold text-gray-600">{rule.ruleString}</p>
+            <p className="text-md  font-bold dark:text-pink-500">{rule.ruleString}</p>
           </li>
         ))}
       </ul>

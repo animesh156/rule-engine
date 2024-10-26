@@ -118,9 +118,10 @@ const convertASTToString = (ast) => {
 router.get('/rules', async (req, res) => {
   try {
     const rules = await Rule.find({}); // Fetch all rules
-
+     console.log(rules)
     const formattedRules = rules.map((rule) => ({
       name: rule.name,
+      id: rule._id,
       ruleString: convertASTToString(rule.ast),
     }));
 
